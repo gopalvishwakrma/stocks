@@ -23,10 +23,15 @@ GMAIL_APP_PWD = os.getenv("GMAIL_APP_PWD")  # Gmail App Password
 
 # ——— CONSTANTS ———
 USER_AGENT = (
-    "Mozilla/5.0 (X11; Linux x86_64) "
-    "AppleWebKit/537.36 (KHTML, like Gecko) "
-    "Chrome/100 Safari/537.36"
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 )
+s.headers.update({
+    "User-Agent": USER_AGENT,
+    "Accept": "application/json, text/plain, */*",
+    "Referer": "https://www.nseindia.com/",
+    "Accept-Language": "en-US,en;q=0.9",
+})
 
 # ——— CONFIGURATION ———
 SYMBOLS = [
@@ -63,14 +68,29 @@ def fetch_ticks(symbol):
     """Return list of (datetime, price) for today from NSE public API."""
     with Session() as s:
         s.headers.update({"User-Agent": USER_AGENT})
-        # prime cookies
-        s.get(f"https://www.nseindia.com/get-quotes/equity?symbol={symbol}")
-        r = s.get(
-            "https://www.nseindia.com/api/chart-databyindex",
-            params={"index": symbol + "EQN"}
-        )
-        data = r.json().get("grapthData", [])
-        return [(datetime.utcfromtimestamp(ts / 1000), price) for ts, price in data]
+        try:
+            # Prime cookies
+            prime_response = s.get(f"https://www.nseindia.com/get-quotes/equity?symbol={symbol}")
+            print(f"Prime response for {symbol}: Status {prime_response.status_code}, Content: {prime_response.text[:200]}")
+            
+            # Fetch chart data
+            r = s.get(
+                "https://www.nseindia.com/api/chart-databyindex",
+                params={"index": symbol + "EQN"}
+            )
+            print(f"API response for {symbol}: Status {r.status_code}, Content: {r.text[:200]}")
+            
+            if r.status_code != 200:
+                raise ValueError(f"Non-200 status code: {r.status_code}")
+            
+            data = r.json().get("grapthData", [])
+            if not data:
+                print(f"No graph data for {symbol}")
+                return []
+            return [(datetime.utcfromtimestamp(ts / 1000), price) for ts, price in data]
+        except Exception as e:
+            print(f"Error fetching ticks for {symbol}: {e}")
+            return []
 
 def aggregate_5min(ticks):
     """Aggregate ticks between 09:15 and 09:20 IST into OHLC."""
