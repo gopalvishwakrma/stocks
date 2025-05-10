@@ -1,0 +1,30 @@
+name: Doji Alert Workflow
+
+on:
+  schedule:
+    - cron: '51 3 * * *'  # 9:21 AM IST (3:51 AM UTC)
+  workflow_dispatch:  # Allows manual triggering
+
+jobs:
+  run-doji-alert:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.9'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Run script
+      env:
+        GMAIL_USER: ${{ secrets.GMAIL_USER }}
+        GMAIL_APP_PWD: ${{ secrets.GMAIL_APP_PWD }}
+      run: python doji_alert.py
