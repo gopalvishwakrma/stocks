@@ -18,8 +18,8 @@ from dotenv import load_dotenv
 
 # ——— LOAD ENVIRONMENT VARIABLES ———
 load_dotenv()
-GMAIL_USER = sandy.buss786@gmail.com       # your Gmail address
-GMAIL_APP_PWD = mqxdsakkgiygsroy  # Gmail App Password
+GMAIL_USER = os.getenv("GMAIL_USER")       # your Gmail address
+GMAIL_APP_PWD = os.getenv("GMAIL_APP_PWD")  # Gmail App Password
 
 # ——— CONSTANTS ———
 USER_AGENT = (
@@ -140,6 +140,4 @@ def main():
         send_email_html(matches)
 
 if __name__ == "__main__":
-    # Schedule via cron: 20 9 * * 1-5 python3 dojihunt.py
     main()
-
